@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+ABSPATH="$(
+  cd "${BASH_SOURCE[0]%/*}" 2>/dev/null
+  echo "$PWD"/"${BASH_SOURCE[0]##*/}"
+)"
+BASEDIR="$(dirname $ABSPATH)"
+
+PY_DIR=py
+
+python3 -m venv ${PY_DIR}
+if ! python3 -m venv ${PY_DIR}; then
+  echo "Exiting because of python3 or pip setup error"
+  exit 1
+fi
+
+CURRENT_PYTHON3=$(which python3)
+if [ "$CURRENT_PYTHON3" != "${BASEDIR}/${PY_DIR}/bin/python3" ]; then
+  echo
+  echo "*****************************************"
+  echo " Do the following"
+  echo "*****************************************"
+  echo "source ${PY_DIR}/bin/activate"
+fi
+
+[[ -r "requirements.txt" ]] && echo "pip install --upgrade -r requirements.txt"
+
+if [ -r "setup.py" ]; then
+  PKG_NAME=$(grep "name='" setup.py | cut -d= -f2- | sed -e "s/[',]//g")
+  CURRENT_PYTHON3=$(which python3)
+  if [ "$CURRENT_PYTHON3" == "${BASEDIR}/${PY_DIR}/bin/python3" ]; then
+    echo "Install local $PKG_NAME"
+    pip install --upgrade . || exit 1
+    echo "Uninstall local $PKG_NAME"
+    pip uninstall -y "${PKG_NAME}" || exit 1
+    echo "Checking package for distribution"
+    twine || exit 1
+    #    python3 setup.py check || exit 1
+    echo "Building source distribution"
+    python3 -m build || exit 1
+    echo "Building wheet distribution"
+    python3 setup.py bdist_wheel || exit 1
+  else
+    echo "Please activate run source '${PY_DIR}/bin/activate' and rerun $0"
+  fi
+fi
