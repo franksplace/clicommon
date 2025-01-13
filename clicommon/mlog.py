@@ -14,7 +14,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 #
-import subprocess, re, sys, inspect
+import re, inspect
 from datetime import datetime
 
 #############################
@@ -82,17 +82,6 @@ class Colors:
 #############################
 # Module Section
 #############################
-def bcheck(var) -> bool: 
-    caller_globals = dict(inspect.getmembers(inspect.stack()[1][0]))["f_globals"]
-    try:
-        if caller_globals[var]:
-            return True
-    except KeyError:
-        return False
-
-    return False
-
-
 def mlog(msg_type, msg_string = None, exit_code :int = None, datelog : bool = None, colors : bool = None ) -> None:
     caller_globals = dict(inspect.getmembers(inspect.stack()[1][0]))["f_globals"]
     if datelog is None:
@@ -115,8 +104,8 @@ def mlog(msg_type, msg_string = None, exit_code :int = None, datelog : bool = No
 
     if re.search("TEST|DEBUG|VERBOSE", msg_type):
         try:
-        if not caller_globals[msg_type]:
-            return
+            if not caller_globals[msg_type]:
+                return
         except KeyError:
             return
 
@@ -146,11 +135,4 @@ def mlog(msg_type, msg_string = None, exit_code :int = None, datelog : bool = No
 
     if exit_code:
         exit(exit_code)
-
-def rcmd(command):
-    try:
-        result = subprocess.check_output(command, shell=True, text=True)
-        return result
-    except subprocess.CalledProcessError as e:
-        mlog("ERROR", f"Error executing command: {e}", 1)
 

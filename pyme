@@ -24,7 +24,7 @@ if [ "$CURRENT_PYTHON3" != "${BASEDIR}/${PY_DIR}/bin/python3" ]; then
   exit 0
 fi
 
-[[ -r "requirements.txt" ]] && pip install --upgrade -r requirements.txt
+[[ -r "requirements.txt" ]] && python3 -m pip install --upgrade -r requirements.txt
 
 if [ -r "setup.py" ]; then
   PKG_NAME=$(grep "name='" setup.py | cut -d= -f2- | sed -e "s/[', ]//g")
@@ -35,39 +35,40 @@ if [ -r "setup.py" ]; then
     echo "*****************************************"
     echo "Install local $PKG_NAME"
     echo "*****************************************"
-    pip install --upgrade . || exit 1
+    python3 -m pip install --upgrade . || exit 1
     echo "*****************************************"
     echo "Uninstall local $PKG_NAME"
     echo "*****************************************"
-    pip uninstall -y "${PKG_NAME}" || exit 1
+    python3 -m pip uninstall -y "${PKG_NAME}" || exit 1
     echo "*****************************************"
     echo "Building source distribution"
     echo "*****************************************"
     python3 -m build --wheel --sdist . || exit 1
     echo "*****************************************"
-    echo "Digitally Signing the package"
-    echo "*****************************************"
-    gpg --detach-sign --yes -a "dist/${PKG_TGZ_NAME}"
-    echo "*****************************************"
     echo "Checking package for distribution"
     echo "*****************************************"
-    twine check dist/* || exit 1
-    echo "*****************************************"
-    echo "Upload package to testpypi"
-    echo "*****************************************"
-    python3 -m twine upload --repository testpypi "dist/${PKG_TGZ_NAME}" || exit 1
-    echo "*****************************************"
-    echo "Install package from testpypi"
-    echo "*****************************************"
-    python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps "${PKG_NAME}" || exit 1
-
-    REL_REG="^(1|True|true|TRUE)$"
-    if [ [ "$RELEASE_FLAG" =~ $RELREG ]]; then
+    python3 -m twine check dist/* || exit 1
+    RELREG="^(1|True|true|TRUE)$"
+    if [[ "$RELEASE_FLAG" =~ $RELREG ]]; then
       echo "*****************************************"
-      echo "Upload package to pypi"
+      echo "Upload package to pypi (RELEASE)"
       echo "*****************************************"
-      python3 -m twine upload "dist/${PKG_TGZ_NAME}" "dist/${PKG_TGZ_NAME}.asc" || exit 1
+      python3 -m twine upload "dist/${PKG_NAME}-${PKG_VER}*" || exit 1
+      echo "*****************************************"
+      echo "Install package from pypi (RELEASE)"
+      echo "*****************************************"
+      python3 -m pip install --upgrade --no-deps "${PKG_NAME}" || exit 1
+    else
+      echo "*****************************************"
+      echo "Upload package to testpypi"
+      echo "*****************************************"
+      python3 -m twine upload --repository testpypi "dist/${PKG_NAME}-${PKG_VER}*" || exit 1
+      echo "*****************************************"
+      echo "Install package from testpypi"
+      echo "*****************************************"
+      python3 -m pip install --upgrade --index-url https://test.pypi.org/simple/ --no-deps "${PKG_NAME}" || exit 1
     fi
+
   else
     echo "Please activate run source '${PY_DIR}/bin/activate' and rerun $0"
   fi
