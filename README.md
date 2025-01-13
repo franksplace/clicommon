@@ -14,6 +14,7 @@ Python Common Client Library
   General logging function
   mlog(msg_type, msg_string = None, exit_code = None, datelog = None, colors = None):
 
+  ```
   msg_type with corresponding Colors (if colors flat is True)
     INFO=GREEN
     SUCCESS=GREEN
@@ -36,6 +37,7 @@ Python Common Client Library
   datelog if boolean is true add ISO8601 datetime to output
 
   colors if boolean is true add ASCII colors to output bsaed on msg_type color codes
+  ```
 
 ### rcmd
 
