@@ -19,7 +19,35 @@ permissions:
 jobs:
   validate:
     if: github.event.inputs.skip_validate != 'true'
-    uses: ./.github/workflows/validate.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run ruff linter
+        run: uv run ruff check clicommon tests
+
+      - name: Run ruff formatter check
+        run: uv run ruff format --check clicommon tests
+
+      - name: Run mypy type checker
+        run: uv run mypy clicommon
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov=clicommon --cov-report=xml
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
 
   test:
     needs: validate
