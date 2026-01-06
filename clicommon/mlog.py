@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import re
 import inspect
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -89,7 +89,7 @@ else:
 # Module Section
 #############################
 def mlog(
-    msg_type,
+    msg_type: str,
     msg_string: Optional[str] = None,
     exit_code: Optional[int] = None,
     datelog: Optional[bool] = None,
@@ -98,7 +98,10 @@ def mlog(
     debug: Optional[bool] = None,
     test: Optional[bool] = None,
 ) -> None:
-    caller_globals = inspect.currentframe().f_back.f_globals
+    frame = inspect.currentframe()
+    if frame is None:
+        return
+    caller_globals = frame.f_back.f_globals  # type: ignore[union-attr]
     if datelog is None:
         try:
             if caller_globals["DATELOG"]:

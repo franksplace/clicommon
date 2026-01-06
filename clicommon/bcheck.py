@@ -16,8 +16,19 @@
 import inspect
 
 
-def bcheck(var) -> bool:
-    caller_globals = inspect.currentframe().f_back.f_globals
+def bcheck(var: str) -> bool:
+    """Check if a variable exists in caller's scope and is truthy.
+
+    Args:
+        var: Variable name to check
+
+    Returns:
+        True if variable exists and is truthy, False otherwise
+    """
+    frame = inspect.currentframe()
+    if frame is None:
+        return False
+    caller_globals = frame.f_back.f_globals  # type: ignore[union-attr]
     try:
         if caller_globals[var]:
             return True

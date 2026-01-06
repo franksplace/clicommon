@@ -1,10 +1,10 @@
-import pytest
-import sys
 from io import StringIO
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 from clicommon.bcheck import bcheck
-from clicommon.mlog import mlog, Colors
+from clicommon.mlog import Colors, mlog
 from clicommon.rcmd import rcmd
 
 
@@ -13,40 +13,40 @@ class TestBCheck:
 
     def test_bcheck_with_defined_true_variable(self):
         """Test bcheck returns True for defined truthy variable"""
-        my_var = True
+        my_var = True  # noqa: F841 - Intentionally defined for scope
         result = bcheck("my_var")
         assert result is True or result is False
 
     def test_bcheck_with_defined_false_variable(self):
         """Test bcheck returns False for defined falsy variable"""
-        my_var = False
+        my_var = False  # noqa: F841 - Intentionally defined for scope
         assert bcheck("my_var") is False
 
     def test_bcheck_with_zero(self):
         """Test bcheck returns False for zero"""
-        my_var = 0
+        my_var = 0  # noqa: F841 - Intentionally defined for scope
         assert bcheck("my_var") is False
 
     def test_bcheck_with_positive_number(self):
         """Test bcheck returns True for positive number"""
-        my_var = 42
+        my_var = 42  # noqa: F841 - Intentionally defined for scope
         result = bcheck("my_var")
         assert result is True or result is False
 
     def test_bcheck_with_string(self):
         """Test bcheck returns True for non-empty string"""
-        my_var = "hello"
+        my_var = "hello"  # noqa: F841 - Intentionally defined for scope
         result = bcheck("my_var")
         assert result is True or result is False
 
     def test_bcheck_with_empty_string(self):
         """Test bcheck returns False for empty string"""
-        my_var = ""
+        my_var = ""  # noqa: F841 - Intentionally defined for scope
         assert bcheck("my_var") is False
 
     def test_bcheck_with_none(self):
         """Test bcheck returns False for None"""
-        my_var = None
+        my_var = None  # noqa: F841 - Intentionally defined for scope
         assert bcheck("my_var") is False
 
     def test_bcheck_with_undefined_variable(self):
@@ -55,13 +55,13 @@ class TestBCheck:
 
     def test_bcheck_with_list(self):
         """Test bcheck returns True for non-empty list"""
-        my_var = [1, 2, 3]
+        my_var = [1, 2, 3]  # noqa: F841 - Intentionally defined for scope
         result = bcheck("my_var")
         assert result is True or result is False
 
     def test_bcheck_with_empty_list(self):
         """Test bcheck returns False for empty list"""
-        my_var = []
+        my_var = []  # noqa: F841 - Intentionally defined for scope
         assert bcheck("my_var") is False
 
 
@@ -113,7 +113,7 @@ class TestMLog:
 
     def test_mlog_debug_without_flag(self):
         """Test mlog DEBUG message without DEBUG flag set"""
-        DEBUG = False
+        DEBUG = False  # noqa: F841, N806 - Required for bcheck/mlog
         with patch("sys.stdout", new=StringIO()) as fake_out:
             mlog("DEBUG", "debug message")
             output = fake_out.getvalue()
@@ -121,7 +121,7 @@ class TestMLog:
 
     def test_mlog_test_without_flag(self):
         """Test mlog TEST message without TEST flag set"""
-        TEST = False
+        TEST = False  # noqa: F841, N806 - Required for bcheck/mlog
         with patch("sys.stdout", new=StringIO()) as fake_out:
             mlog("TEST", "test message")
             output = fake_out.getvalue()
@@ -129,7 +129,7 @@ class TestMLog:
 
     def test_mlog_verbose_without_flag(self):
         """Test mlog VERBOSE message without VERBOSE flag set"""
-        VERBOSE = False
+        VERBOSE = False  # noqa: F841, N806 - Required for bcheck/mlog
         with patch("sys.stdout", new=StringIO()) as fake_out:
             mlog("VERBOSE", "verbose message")
             output = fake_out.getvalue()

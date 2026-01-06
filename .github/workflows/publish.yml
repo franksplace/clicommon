@@ -3,15 +3,26 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
+    inputs:
+      skip_validate:
+        description: "Skip validation (not recommended)"
+        required: false
+        default: "false"
+        type: boolean
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
+  validate:
+    if: github.event.inputs.skip_validate != 'true'
+    uses: ./.github/workflows/validate.yml
+
   test:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +37,7 @@ jobs:
         run: uv run pytest
 
   build-and-publish:
-    needs: test
+    needs: [validate, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
