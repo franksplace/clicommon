@@ -1,27 +1,30 @@
-
 #
-#Copyright 2024 Frank Stutz.
+# Copyright 2024 Frank Stutz.
 #
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
 #    http://www.apache.org/licenses/LICENSE-2.0
 #
-#Unless required by applicable law or agreed to in writing, software
-#distributed under the License is distributed on an "AS IS" BASIS,
-#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#See the License for the specific language governing permissions and
-#limitations under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
-import re, inspect
+import re
+import inspect
 from datetime import datetime
+from typing import Optional
+
 
 #############################
 # Class Section
 #############################
 class Colors:
-    """ ANSI color codes - see see https://en.wikipedia.org/wiki/ANSI_escape_code#Colors """
+    """ANSI color codes - see see https://en.wikipedia.org/wiki/ANSI_escape_code#Colors"""
+
     BOLD = "\033[1m"
     FAINT = "\033[2m"
     ITALIC = "\033[3m"
@@ -55,84 +58,108 @@ class Colors:
     BRIGHT_CYAN = "\033[0;96m"
     BRIGHT_WHITE = "\033[0;97m"
     END = "\033[0m"
-    # preferred color for message/log types 
-    INFO=GREEN
-    SUCCESS=GREEN
-    WARN=YELLOW
-    WARNING=YELLOW
-    FATAL=RED
-    ERROR=RED
-    CRITICAL=RED
-    TEST=GRAY
-    DEBUG=MAGENTA
-    VERBOSE=BRIGHT_CYAN
-    BUILD_DEBUG=BRIGHT_GREEN
-    CODE_DEBUG=BRIGHT_GREEN
+    # preferred color for message/log types
+    INFO = GREEN
+    SUCCESS = GREEN
+    WARN = YELLOW
+    WARNING = YELLOW
+    FATAL = RED
+    ERROR = RED
+    CRITICAL = RED
+    TEST = GRAY
+    DEBUG = MAGENTA
+    VERBOSE = BRIGHT_CYAN
+    BUILD_DEBUG = BRIGHT_GREEN
+    CODE_DEBUG = BRIGHT_GREEN
 
-    if not __import__("sys").stdout.isatty():
-        for _ in dir():
-            if isinstance(_, str) and _[0] != "_":
-                locals()[_] = ""
-    else:
-        if __import__("platform").system() == "Windows":
-            kernel32 = __import__("ctypes").windll.kernel32
-            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-            del kernel32
+
+# Disable colors if not a TTY or setup Windows console
+if not __import__("sys").stdout.isatty():
+    for attr_name in dir(Colors):
+        if isinstance(attr_name, str) and attr_name[0] != "_":
+            setattr(Colors, attr_name, "")
+else:
+    if __import__("platform").system() == "Windows":
+        kernel32 = __import__("ctypes").windll.kernel32
+        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+        del kernel32
+
 
 #############################
 # Module Section
 #############################
-def mlog(msg_type, msg_string = None, exit_code :int = None, datelog : bool = None, colors : bool = None ) -> None:
-    caller_globals = dict(inspect.getmembers(inspect.stack()[1][0]))["f_globals"]
+def mlog(
+    msg_type,
+    msg_string: Optional[str] = None,
+    exit_code: Optional[int] = None,
+    datelog: Optional[bool] = None,
+    colors: Optional[bool] = None,
+    verbose: Optional[bool] = None,
+    debug: Optional[bool] = None,
+    test: Optional[bool] = None,
+) -> None:
+    caller_globals = inspect.currentframe().f_back.f_globals
     if datelog is None:
         try:
-            if caller_globals['DATELOG']:
-                datelog = caller_globals['DATELOG']
+            if caller_globals["DATELOG"]:
+                datelog = caller_globals["DATELOG"]
         except KeyError:
             datelog = False
 
     if colors is None:
         try:
-            if caller_globals['COLORS']:
-                colors = caller_globals['COLORS']
+            if caller_globals["COLORS"]:
+                colors = caller_globals["COLORS"]
         except KeyError:
             colors = False
 
     if not msg_string:
         msg_string = msg_type
-        msg_type = ''
+        msg_type = ""
 
     if re.search("TEST|DEBUG|VERBOSE", msg_type):
-        try:
-            if not caller_globals[msg_type]:
+        check_flag = None
+        if msg_type == "TEST":
+            check_flag = test
+        elif msg_type == "DEBUG":
+            check_flag = debug
+        elif msg_type == "VERBOSE":
+            check_flag = verbose
+
+        if check_flag is None:
+            try:
+                check_flag = caller_globals[msg_type]
+            except KeyError:
                 return
-        except KeyError:
+
+        if not check_flag:
             return
 
     if datelog:
-        prefix = datetime.now(tz=datetime.now().astimezone().tzinfo).strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        prefix = datetime.now(tz=datetime.now().astimezone().tzinfo).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
         if msg_type:
             prefix += f" {msg_type}"
     else:
         if msg_type:
             prefix = msg_type
         else:
-            prefix = ''
+            prefix = ""
 
     if prefix:
-        out=f"{prefix} {msg_string}"
+        out = f"{prefix} {msg_string}"
     else:
-        out=msg_string
+        out = msg_string
 
     if colors:
-        if msg_type:
-            print(getattr(Colors,msg_type) + f"msg_type is {msg_type} " + out + Colors.END)
+        if msg_type and hasattr(Colors, msg_type):
+            print(getattr(Colors, msg_type) + out + Colors.END)
         else:
-            print(Colors.END + f"msg_type is {msg_type} " + out + Colors.END)
+            print(Colors.END + out + Colors.END)
 
     else:
         print(out)
 
     if exit_code:
         exit(exit_code)
-
